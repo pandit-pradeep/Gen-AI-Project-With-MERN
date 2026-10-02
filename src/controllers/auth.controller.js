@@ -1,8 +1,7 @@
 const userModel = require("../models/user.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const tokenBlacklist = require("../models/blacklist.model")
-
+const tokenBlacklist = require("../models/blacklist.model");
 
 /**
  * @name  registerUserController
@@ -64,15 +63,15 @@ async function registerUserController(req, res) {
 async function logInUserController(req, res) {
   const { email, password } = req.body;
 
-  const user = await userModel.findOne({email})
+  const user = await userModel.findOne({ email });
 
   if (!user) {
     return res.status(400).json({
-        message:"Invalid email or password"
-    })
+      message: "Invalid email or password",
+    });
   }
 
-    const isPasswordValid = await bcrypt.compare(password,user.password)
+  const isPasswordValid = await bcrypt.compare(password, user.password);
 
   if (!isPasswordValid) {
     return res.status(400).json({
@@ -96,27 +95,49 @@ async function logInUserController(req, res) {
       email: user.email,
     },
   });
-
 }
 
+/**
+ * @name logoutUserController
+ * @description clear token form user cookie and add the token in blacklist
+ * @access Public
+ */
 
-async function logoutUserController(req,res) {
-  const token = req.cookies.token
+async function logoutUserController(req, res) {
+  const token = req.cookies.token;
 
   if (token) {
-    await tokenBlacklist.create({token})
-    
+    await tokenBlacklist.create({ token });
   }
 
-  res.clearCookie("token")
+  res.clearCookie("token");
 
   res.status(200).json({
-    message:"User logged out Successfully"
-  })
+    message: "User logged out Successfully",
+  });
 }
 
+/**
+ * @name getMeController
+ * @description get the current logged in user details.
+ * @access Private
+ */
+
+async function getMeController(req, res) {
+  const user = await userModel.findById(req.user.id);
+
+  res.status(200).json({
+    message: "User details fetched successfully",
+    user: {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+    },
+  });
+}
 module.exports = {
   registerUserController,
   logInUserController,
-  logoutUserController
-}
+  logoutUserController,
+  getMeController,
+};
